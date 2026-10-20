@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 import { env } from "../config/env";
 
@@ -8,17 +9,31 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  const isAppError = err instanceof AppError;
-  const statusCode = isAppError ? err.statusCode : 500;
-  const message = isAppError ? err.message : "Internal server error";
+  let statusCode = 500;
+  let message = "Internal server error";
+  let errors: unknown;
 
-  if (!isAppError) {
+  if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    message = err.message;
+    errors = err.errors;
+  } else if (
+    err instanceof Prisma.PrismaClientKnownRequestError &&
+    err.code === "P2002"
+  ) {
+    statusCode = 409;
+    message = "A record with this value already exists";
+  } else if (err instanceof SyntaxError && "body" in err) {
+    statusCode = 400;
+    message = "Invalid JSON in request body";
+  } else {
     console.error(err);
   }
 
   res.status(statusCode).json({
     success: false,
     message,
-    ...(env.nodeEnv === "development" && { stack: err.stack }),
+    ...(errors ? { errors } : {}),
+    ...(env.nodeEnv === "development" && statusCode === 500 && { stack: err.stack }),
   });
 };
