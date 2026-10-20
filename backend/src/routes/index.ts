@@ -3,6 +3,8 @@ import authRoutes from "../modules/auth/auth.routes";
 import usersRoutes from "../modules/users/users.routes";
 import categoriesRoutes from "../modules/categories/categories.routes";
 import servicesRoutes from "../modules/services/services.routes";
+import plansRoutes from "../modules/plans/plans.routes";
+import subscriptionsRoutes from "../modules/subscriptions/subscriptions.routes";
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
 router.use("/categories", categoriesRoutes);
 router.use("/services", servicesRoutes);
+router.use("/plans", plansRoutes);
+router.use("/subscriptions", subscriptionsRoutes);
 
 export default router;

@@ -1,7 +1,5 @@
 import { ActivityAction, Prisma } from "@prisma/client";
-import { prisma } from "../config/prisma";
-
-type DbClient = Prisma.TransactionClient | typeof prisma;
+import { prisma, type DbClient } from "../config/prisma";
 
 interface LogInput {
   userId?: string;
