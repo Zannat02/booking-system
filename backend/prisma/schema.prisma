@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum BookingType {
+  SUBSCRIPTION
+  ONE_TIME
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ActivityAction {
+  USER_REGISTERED
+  SUBSCRIPTION_CREATED
+  BOOKING_CREATED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  PAYMENT_COMPLETED
+  REFUND_PROCESSED
+}
+
+// ---------- MODELS ----------
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+  bookings      Booking[]
+  assignedSlots Slot[]
+  payments      Payment[]
+  activityLogs  ActivityLog[]
+}
+
+model ServiceCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  services Service[]
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  price           Int
+  durationMinutes Int
+  isActive        Boolean  @default(true)
+  categoryId      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  plans    PlanService[]
+  slots    Slot[]
+  bookings Booking[]
+
+  @@unique([categoryId, name])
+}
+
+model Plan {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  description  String?
+  price        Int
+  durationDays Int
+  credits      Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  services      PlanService[]
+  subscriptions Subscription[]
+}
+
+model PlanService {
+  planId    String
+  serviceId String
+
+  plan    Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([planId, serviceId])
+}
+
+model Subscription {
+  id               String             @id @default(uuid())
+  userId           String
+  planId           String
+  status           SubscriptionStatus @default(ACTIVE)
+  startDate        DateTime
+  endDate          DateTime
+  remainingCredits Int
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  bookings Booking[]
+  payment  Payment?
+
+  @@index([userId, status])
+}
+
+model Slot {
+  id          String   @id @default(uuid())
+  serviceId   String
+  staffId     String
+  startTime   DateTime
+  endTime     DateTime
+  capacity    Int
+  bookedCount Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  service  Service   @relation(fields: [serviceId], references: [id])
+  staff    User      @relation(fields: [staffId], references: [id])
+  bookings Booking[]
+
+  @@index([serviceId, startTime])
+  @@index([staffId, startTime])
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  customerId     String
+  serviceId      String
+  slotId         String
+  subscriptionId String?
+  type           BookingType
+  status         BookingStatus @default(PENDING)
+  price          Int
+  cancelledAt    DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  customer     User          @relation(fields: [customerId], references: [id])
+  service      Service       @relation(fields: [serviceId], references: [id])
+  slot         Slot          @relation(fields: [slotId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  payment      Payment?
+
+  @@index([customerId, status])
+  @@index([slotId])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  userId         String
+  bookingId      String?       @unique
+  subscriptionId String?       @unique
+  amount         Int
+  status         PaymentStatus @default(PENDING)
+  transactionId  String?       @unique
+  paidAt         DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  booking      Booking?      @relation(fields: [bookingId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+}
+
+model ActivityLog {
+  id        String         @id @default(uuid())
+  userId    String?
+  action    ActivityAction
+  message   String
+  metadata  Json?
+  createdAt DateTime       @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+}
