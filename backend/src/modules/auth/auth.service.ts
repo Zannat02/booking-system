@@ -5,16 +5,10 @@ import { hashPassword, comparePassword } from "../../utils/password";
 import { signToken } from "../../utils/jwt";
 import { logActivity } from "../../utils/activityLogger";
 import { RegisterInput, LoginInput } from "./auth.validation";
+import { publicUserSelect } from "../users/user.select";
 
-const publicUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  phone: true,
-  role: true,
-  isActive: true,
-  createdAt: true,
-};
+
+
 
 export const registerUser = async (input: RegisterInput) => {
   const existing = await prisma.user.findUnique({
