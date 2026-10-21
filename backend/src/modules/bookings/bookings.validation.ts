@@ -18,3 +18,9 @@ export const listBookingsQuerySchema = paginationSchema.extend({
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type ListBookingsQuery = z.infer<typeof listBookingsQuerySchema>;
+
+export const updateBookingStatusSchema = z.object({
+  status: z.enum(["CONFIRMED", "COMPLETED", "CANCELLED"]),
+});
+
+export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>;

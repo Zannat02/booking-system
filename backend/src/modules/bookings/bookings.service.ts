@@ -12,7 +12,13 @@ import { getPagination, buildMeta } from "../../utils/pagination";
 import { getDayRange } from "../../utils/dateRange";
 import { logActivity } from "../../utils/activityLogger";
 import { expireOutdatedSubscriptions } from "../subscriptions/subscriptions.service";
-import { CreateBookingInput, ListBookingsQuery } from "./bookings.validation";
+
+import {
+  CreateBookingInput,
+  ListBookingsQuery,
+  UpdateBookingStatusInput,
+} from "./bookings.validation";
+import { canTransition } from "./bookings.rules";
 
 type Actor = { id: string; role: Role };
 
@@ -235,4 +241,153 @@ export const getBookingById = async (actor: Actor, id: string) => {
     throw new AppError("Booking not found", 404);
   }
   return booking;
+};
+
+export const updateBookingStatus = async (
+  actor: Actor,
+  id: string,
+  input: UpdateBookingStatusInput
+) => {
+  if (input.status === BookingStatus.CANCELLED) {
+    throw new AppError(
+      "Use POST /api/bookings/:id/cancel to cancel a booking",
+      400
+    );
+  }
+
+  const booking = await prisma.booking.findFirst({
+    where: { AND: [{ id }, accessFilter(actor)] },
+  });
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (!canTransition(booking.status, input.status)) {
+    throw new AppError(
+      `Cannot change booking status from ${booking.status} to ${input.status}`,
+      409
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+  
+    const updated = await tx.booking.updateMany({
+      where: { id, status: booking.status },
+      data: {
+        status: input.status,
+        ...(input.status === BookingStatus.COMPLETED
+          ? { completedAt: new Date() }
+          : {}),
+      },
+    });
+    if (updated.count === 0) {
+      throw new AppError(
+        "Booking status has just changed, please refresh and try again",
+        409
+      );
+    }
+
+    if (input.status === BookingStatus.COMPLETED) {
+      await logActivity(
+        {
+          userId: actor.id,
+          action: ActivityAction.BOOKING_COMPLETED,
+          message: "Booking marked as completed",
+          metadata: { bookingId: id },
+        },
+        tx
+      );
+    }
+  });
+
+  return prisma.booking.findUniqueOrThrow({
+    where: { id },
+    include: bookingInclude,
+  });
+};
+
+export const cancelBooking = async (actor: Actor, id: string) => {
+  const { creditRestored } = await prisma.$transaction(
+    async (tx) => {
+      const booking = await tx.booking.findFirst({
+        where: { AND: [{ id }, accessFilter(actor)] },
+        include: {
+          slot: { select: { startTime: true } },
+          service: { select: { name: true } },
+        },
+      });
+      if (!booking) {
+        throw new AppError("Booking not found", 404);
+      }
+
+      if (booking.status === BookingStatus.COMPLETED) {
+        throw new AppError("Cannot cancel a completed booking", 409);
+      }
+      if (booking.status === BookingStatus.CANCELLED) {
+        throw new AppError("Booking is already cancelled", 409);
+      }
+      if (actor.role === Role.CUSTOMER && booking.slot.startTime <= new Date()) {
+        throw new AppError(
+          "You cannot cancel a booking after the slot has started",
+          400
+        );
+      }
+
+   
+      const cancelled = await tx.booking.updateMany({
+        where: {
+          id,
+          status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+        },
+        data: { status: BookingStatus.CANCELLED, cancelledAt: new Date() },
+      });
+      if (cancelled.count === 0) {
+        throw new AppError(
+          "Booking status has just changed, please refresh and try again",
+          409
+        );
+      }
+
+      await tx.slot.updateMany({
+        where: { id: booking.slotId, bookedCount: { gt: 0 } },
+        data: { bookedCount: { decrement: 1 } },
+      });
+
+   
+      let creditRestored = false;
+      if (booking.type === BookingType.SUBSCRIPTION && booking.subscriptionId) {
+        const restored = await tx.subscription.updateMany({
+          where: {
+            id: booking.subscriptionId,
+            status: SubscriptionStatus.ACTIVE,
+            endDate: { gt: new Date() },
+          },
+          data: { remainingCredits: { increment: 1 } },
+        });
+        creditRestored = restored.count === 1;
+      }
+
+      await logActivity(
+        {
+          userId: actor.id,
+          action: ActivityAction.BOOKING_CANCELLED,
+          message:
+            actor.role === Role.CUSTOMER
+              ? `${booking.service.name} booking cancelled`
+              : `${booking.service.name} booking cancelled by ${actor.role.toLowerCase()}`,
+          metadata: { bookingId: id, creditRestored },
+        },
+        tx
+      );
+
+      return { creditRestored };
+    },
+    { maxWait: 10000, timeout: 20000 }
+  );
+
+  const booking = await prisma.booking.findUniqueOrThrow({
+    where: { id },
+    include: bookingInclude,
+  });
+  return { booking, creditRestored };
 };
