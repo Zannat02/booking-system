@@ -6,6 +6,7 @@ import servicesRoutes from "../modules/services/services.routes";
 import plansRoutes from "../modules/plans/plans.routes";
 import subscriptionsRoutes from "../modules/subscriptions/subscriptions.routes";
 import slotsRoutes from "../modules/slots/slots.routes";
+import bookingsRoutes from "../modules/bookings/bookings.routes";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/services", servicesRoutes);
 router.use("/plans", plansRoutes);
 router.use("/subscriptions", subscriptionsRoutes);
 router.use("/slots", slotsRoutes);
+router.use("/bookings", bookingsRoutes);
 
 export default router;

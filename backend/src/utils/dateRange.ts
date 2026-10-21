@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 // Asia/Dhaka = UTC+06:00
 const OFFSET_HOURS = 6;
 const OFFSET = "+06:00";
@@ -16,3 +18,12 @@ export const getTodayRange = () => {
   const dateStr = dhakaNow.toISOString().slice(0, 10);
   return getDayRange(dateStr);
 };
+
+// Query-te ?date=2026-11-10 for validate
+export const dateQuery = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "date must be in YYYY-MM-DD format")
+  .refine(
+    (value) => !Number.isNaN(new Date(`${value}T00:00:00${OFFSET}`).getTime()),
+    "Invalid date"
+  );
