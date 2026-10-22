@@ -8,6 +8,8 @@ import subscriptionsRoutes from "../modules/subscriptions/subscriptions.routes";
 import slotsRoutes from "../modules/slots/slots.routes";
 import bookingsRoutes from "../modules/bookings/bookings.routes";
 import paymentsRoutes from "../modules/payments/payments.routes";
+import activityRoutes from "../modules/activity/activity.routes";
+import dashboardRoutes from "../modules/dashboard/dashboard.routes";
 
 const router = Router();
 
@@ -28,5 +30,7 @@ router.use("/subscriptions", subscriptionsRoutes);
 router.use("/slots", slotsRoutes);
 router.use("/bookings", bookingsRoutes);
 router.use("/payments", paymentsRoutes);
+router.use("/activity", activityRoutes);
+router.use("/dashboard", dashboardRoutes);
 
 export default router;

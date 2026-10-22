@@ -15,7 +15,7 @@ import { PayBookingInput, ListPaymentsQuery } from "./payments.validation";
 
 type Actor = { id: string; role: Role };
 
-const paymentInclude = {
+ export  const paymentInclude = {
   user: { select: { id: true, name: true, email: true } },
   booking: {
     select: {
