@@ -2,6 +2,7 @@ import {
   ActivityAction,
   BookingStatus,
   BookingType,
+  PaymentStatus,
   Prisma,
   Role,
   SubscriptionStatus,
@@ -269,6 +270,22 @@ export const updateBookingStatus = async (
     );
   }
 
+    
+  if (
+    input.status === BookingStatus.CONFIRMED &&
+    booking.type === BookingType.ONE_TIME
+  ) {
+    const payment = await prisma.payment.findUnique({
+      where: { bookingId: id },
+    });
+    if (payment?.status !== PaymentStatus.PAID) {
+      throw new AppError(
+        "Payment is required before confirming a one-time booking",
+        409
+      );
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
   
     const updated = await tx.booking.updateMany({
@@ -307,7 +324,7 @@ export const updateBookingStatus = async (
 };
 
 export const cancelBooking = async (actor: Actor, id: string) => {
-  const { creditRestored } = await prisma.$transaction(
+  const { creditRestored, refunded } = await prisma.$transaction(
     async (tx) => {
       const booking = await tx.booking.findFirst({
         where: { AND: [{ id }, accessFilter(actor)] },
@@ -333,7 +350,7 @@ export const cancelBooking = async (actor: Actor, id: string) => {
         );
       }
 
-   
+      // 1) Atomic gate
       const cancelled = await tx.booking.updateMany({
         where: {
           id,
@@ -348,12 +365,13 @@ export const cancelBooking = async (actor: Actor, id: string) => {
         );
       }
 
+      // 2) Slot-er seat ferot
       await tx.slot.updateMany({
         where: { id: booking.slotId, bookedCount: { gt: 0 } },
         data: { bookedCount: { decrement: 1 } },
       });
 
-   
+      // 3) Credit ferot (subscription valid thakle)
       let creditRestored = false;
       if (booking.type === BookingType.SUBSCRIPTION && booking.subscriptionId) {
         const restored = await tx.subscription.updateMany({
@@ -367,6 +385,33 @@ export const cancelBooking = async (actor: Actor, id: string) => {
         creditRestored = restored.count === 1;
       }
 
+      // 4) Refund (PAID payment thakle)
+      let refunded = false;
+      const payment = await tx.payment.findUnique({ where: { bookingId: id } });
+      if (payment && payment.status === PaymentStatus.PAID) {
+        const refund = await tx.payment.updateMany({
+          where: { id: payment.id, status: PaymentStatus.PAID },
+          data: { status: PaymentStatus.REFUNDED, refundedAt: new Date() },
+        });
+        refunded = refund.count === 1;
+
+        if (refunded) {
+          await logActivity(
+            {
+              userId: booking.customerId,
+              action: ActivityAction.REFUND_PROCESSED,
+              message: `Refund of ${payment.amount} BDT processed for ${booking.service.name}`,
+              metadata: {
+                paymentId: payment.id,
+                bookingId: id,
+                amount: payment.amount,
+              },
+            },
+            tx
+          );
+        }
+      }
+
       await logActivity(
         {
           userId: actor.id,
@@ -375,12 +420,12 @@ export const cancelBooking = async (actor: Actor, id: string) => {
             actor.role === Role.CUSTOMER
               ? `${booking.service.name} booking cancelled`
               : `${booking.service.name} booking cancelled by ${actor.role.toLowerCase()}`,
-          metadata: { bookingId: id, creditRestored },
+          metadata: { bookingId: id, creditRestored, refunded },
         },
         tx
       );
 
-      return { creditRestored };
+      return { creditRestored, refunded };
     },
     { maxWait: 10000, timeout: 20000 }
   );
@@ -389,5 +434,5 @@ export const cancelBooking = async (actor: Actor, id: string) => {
     where: { id },
     include: bookingInclude,
   });
-  return { booking, creditRestored };
+  return { booking, creditRestored, refunded };
 };

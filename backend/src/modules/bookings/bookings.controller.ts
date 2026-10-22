@@ -37,15 +37,19 @@ export const updateStatus = catchAsync(async (req, res) => {
 });
 
 export const cancel = catchAsync(async (req, res) => {
-  const { booking, creditRestored } = await bookingsService.cancelBooking(
-    req.user!,
-    req.params.id as string
-  );
+  const { booking, creditRestored, refunded } =
+    await bookingsService.cancelBooking(req.user!, req.params.id as string);
+
+  const notes: string[] = [];
+  if (creditRestored) notes.push("your credit has been restored");
+  if (refunded) notes.push("your payment has been refunded");
+
   res.status(200).json({
     success: true,
-    message: creditRestored
-      ? "Booking cancelled and your credit has been restored"
-      : "Booking cancelled",
-    data: { booking, creditRestored },
+    message:
+      notes.length > 0
+        ? `Booking cancelled and ${notes.join(" and ")}`
+        : "Booking cancelled",
+    data: { booking, creditRestored, refunded },
   });
 });
