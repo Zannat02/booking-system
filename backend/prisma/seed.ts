@@ -85,6 +85,48 @@ async function main() {
     skipDuplicates: true,
   });
 
+
+  const slotCount = await prisma.slot.count();
+  if (slotCount === 0) {
+    const staff = await prisma.user.findUniqueOrThrow({
+      where: { email: "staff@example.com" },
+    });
+
+    const DAY = 24 * 60 * 60 * 1000;
+    // Bangladesh time-e (UTC+6) "aj + daysFromNow" er "hour" tar Date
+    const at = (daysFromNow: number, hour: number) => {
+      const dhaka = new Date(Date.now() + daysFromNow * DAY + 6 * 60 * 60 * 1000);
+      const dateStr = dhaka.toISOString().slice(0, 10);
+      return new Date(`${dateStr}T${String(hour).padStart(2, "0")}:00:00+06:00`);
+    };
+
+    const slotData = [];
+    for (let day = 1; day <= 7; day++) {
+      slotData.push({
+        serviceId: services[0].id, // AC Servicing
+        staffId: staff.id,
+        startTime: at(day, 10),
+        endTime: at(day, 12),
+        capacity: 3,
+      });
+      slotData.push({
+        serviceId: services[1].id, // Deep Cleaning
+        staffId: staff.id,
+        startTime: at(day, 14),
+        endTime: at(day, 17),
+        capacity: 2,
+      });
+      slotData.push({
+        serviceId: services[2].id, // Plumbing 
+        staffId: staff.id,
+        startTime: at(day, 18),
+        endTime: at(day, 19),
+        capacity: 1,
+      });
+    }
+    await prisma.slot.createMany({ data: slotData });
+  }
+
   console.log("Seed completed");
 }
 
