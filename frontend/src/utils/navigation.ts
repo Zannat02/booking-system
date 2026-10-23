@@ -9,10 +9,16 @@ export const navItemsByRole: Record<Role, NavItem[]> = {
     ADMIN: [
         { label: "Dashboard", to: "/admin" },
         { label: "Bookings", to: "/admin/bookings" },
+        { label: "Slots", to: "/admin/slots" },
+        { label: "Services", to: "/admin/services" },
+        { label: "Categories", to: "/admin/categories" },
     ],
     STAFF: [
         { label: "Dashboard", to: "/staff" },
         { label: "Bookings", to: "/staff/bookings" },
+        { label: "Slots", to: "/staff/slots" },
+        { label: "Services", to: "/staff/services" },
+        { label: "Categories", to: "/staff/categories" },
     ],
     CUSTOMER: [
         { label: "Dashboard", to: "/customer" },

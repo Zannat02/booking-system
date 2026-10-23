@@ -56,3 +56,47 @@ export const getServiceById = async (id: string): Promise<Service> => {
   const response = await api.get<ApiResponse<Service>>(`/services/${id}`);
   return response.data.data;
 };
+
+
+// ---------- Admin/Staff: create & update ----------
+
+export interface CategoryInput {
+  name: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface ServiceInput {
+  name: string;
+  description?: string;
+  price: number;
+  durationMinutes: number;
+  categoryId: string;
+  isActive?: boolean;
+}
+
+export const createCategory = async (data: CategoryInput): Promise<Category> => {
+  const response = await api.post<ApiResponse<Category>>("/categories", data);
+  return response.data.data;
+};
+
+export const updateCategory = async (
+  id: string,
+  data: Partial<CategoryInput>
+): Promise<Category> => {
+  const response = await api.patch<ApiResponse<Category>>(`/categories/${id}`, data);
+  return response.data.data;
+};
+
+export const createService = async (data: ServiceInput): Promise<Service> => {
+  const response = await api.post<ApiResponse<Service>>("/services", data);
+  return response.data.data;
+};
+
+export const updateService = async (
+  id: string,
+  data: Partial<ServiceInput>
+): Promise<Service> => {
+  const response = await api.patch<ApiResponse<Service>>(`/services/${id}`, data);
+  return response.data.data;
+};

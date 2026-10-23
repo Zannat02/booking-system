@@ -9,6 +9,7 @@ const styles: Record<string, string> = {
   UNPAID: "bg-slate-100 text-slate-600",
   ACTIVE: "bg-emerald-100 text-emerald-700",
   EXPIRED: "bg-slate-200 text-slate-600",
+  INACTIVE: "bg-slate-200 text-slate-600",
 };
 
 interface StatusBadgeProps {

@@ -15,6 +15,9 @@ import PlansPage from "../pages/customer/PlansPage";
 import SlotsPage from "../pages/customer/SlotsPage";
 import MyBookingsPage from "../pages/customer/MyBookingsPage";
 import ManageBookingsPage from "../pages/shared/ManageBookingsPage";
+import ManageSlotsPage from "../pages/shared/ManageSlotsPage";
+import ManageCategoriesPage from "../pages/shared/ManageCategoriesPage";
+import ManageServicesPage from "../pages/shared/ManageServicesPage";
 
 export default function AppRoutes() {
     return (
@@ -32,14 +35,20 @@ export default function AppRoutes() {
                 <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
                     <Route path="/admin" element={<DashboardLayout />}>
                         <Route index element={<AdminDashboardPage />} />
-                         <Route path="bookings" element={<ManageBookingsPage />} />
+                        <Route path="bookings" element={<ManageBookingsPage />} />
+                        <Route path="slots" element={<ManageSlotsPage />} />
+                        <Route path="services" element={<ManageServicesPage />} />
+                        <Route path="categories" element={<ManageCategoriesPage />} />
                     </Route>
                 </Route>
 
                 <Route element={<RoleRoute allowedRoles={["STAFF"]} />}>
                     <Route path="/staff" element={<DashboardLayout />}>
                         <Route index element={<StaffDashboardPage />} />
-                         <Route path="bookings" element={<ManageBookingsPage />} />
+                        <Route path="bookings" element={<ManageBookingsPage />} />
+                        <Route path="slots" element={<ManageSlotsPage />} />
+                        <Route path="services" element={<ManageServicesPage />} />
+                        <Route path="categories" element={<ManageCategoriesPage />} />
                     </Route>
                 </Route>
 
