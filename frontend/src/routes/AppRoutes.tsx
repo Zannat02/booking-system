@@ -14,6 +14,7 @@ import ServicesPage from "../pages/customer/ServicesPage";
 import PlansPage from "../pages/customer/PlansPage";
 import SlotsPage from "../pages/customer/SlotsPage";
 import MyBookingsPage from "../pages/customer/MyBookingsPage";
+import ManageBookingsPage from "../pages/shared/ManageBookingsPage";
 
 export default function AppRoutes() {
     return (
@@ -31,12 +32,14 @@ export default function AppRoutes() {
                 <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
                     <Route path="/admin" element={<DashboardLayout />}>
                         <Route index element={<AdminDashboardPage />} />
+                         <Route path="bookings" element={<ManageBookingsPage />} />
                     </Route>
                 </Route>
 
                 <Route element={<RoleRoute allowedRoles={["STAFF"]} />}>
                     <Route path="/staff" element={<DashboardLayout />}>
                         <Route index element={<StaffDashboardPage />} />
+                         <Route path="bookings" element={<ManageBookingsPage />} />
                     </Route>
                 </Route>
 

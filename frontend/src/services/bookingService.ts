@@ -48,3 +48,15 @@ export const cancelBooking = async (id: string): Promise<CancelResult> => {
   );
   return response.data.data;
 };
+
+
+export const updateBookingStatus = async (
+  id: string,
+  status: "CONFIRMED" | "COMPLETED"
+): Promise<Booking> => {
+  const response = await api.patch<ApiResponse<Booking>>(
+    `/bookings/${id}/status`,
+    { status }
+  );
+  return response.data.data;
+};
