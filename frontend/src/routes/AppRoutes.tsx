@@ -10,40 +10,49 @@ import ProtectedRoute from "./ProtectedRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import RoleRoute from "./RoleRoute";
 import RootRedirect from "./RootRedirect";
+import ServicesPage from "../pages/customer/ServicesPage";
+import PlansPage from "../pages/customer/PlansPage";
+import SlotsPage from "../pages/customer/SlotsPage";
+import MyBookingsPage from "../pages/customer/MyBookingsPage";
 
 export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<RootRedirect />} />
+    return (
+        <Routes>
+            <Route path="/" element={<RootRedirect />} />
 
-     
-      <Route element={<PublicOnlyRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
 
-      {/* Login lagbe */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
-          <Route path="/admin" element={<DashboardLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-          </Route>
-        </Route>
+            <Route element={<PublicOnlyRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+            </Route>
 
-        <Route element={<RoleRoute allowedRoles={["STAFF"]} />}>
-          <Route path="/staff" element={<DashboardLayout />}>
-            <Route index element={<StaffDashboardPage />} />
-          </Route>
-        </Route>
+            {/* Login lagbe */}
+            <Route element={<ProtectedRoute />}>
+                <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
+                    <Route path="/admin" element={<DashboardLayout />}>
+                        <Route index element={<AdminDashboardPage />} />
+                    </Route>
+                </Route>
 
-        <Route element={<RoleRoute allowedRoles={["CUSTOMER"]} />}>
-          <Route path="/customer" element={<DashboardLayout />}>
-            <Route index element={<CustomerDashboardPage />} />
-          </Route>
-        </Route>
-      </Route>
+                <Route element={<RoleRoute allowedRoles={["STAFF"]} />}>
+                    <Route path="/staff" element={<DashboardLayout />}>
+                        <Route index element={<StaffDashboardPage />} />
+                    </Route>
+                </Route>
 
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
+                <Route element={<RoleRoute allowedRoles={["CUSTOMER"]} />}>
+                    <Route path="/customer" element={<DashboardLayout />}>
+                        <Route index element={<CustomerDashboardPage />} />
+                        <Route path="services" element={<ServicesPage />} />
+                        <Route path="services" element={<ServicesPage />} />
+                        <Route path="plans" element={<PlansPage />} />
+                        <Route path="slots" element={<SlotsPage />} />
+                        <Route path="bookings" element={<MyBookingsPage />} />
+                    </Route>
+                </Route>
+            </Route>
+
+            <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+    );
 }
