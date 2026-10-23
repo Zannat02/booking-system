@@ -23,6 +23,9 @@ app.get("/", (_req, res) => {
     documentation: "See the README for available API endpoints",
   });
 });
+
+app.use("/api", routes); 
+
 app.use(notFound);
 app.use(errorHandler);
 
