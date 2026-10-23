@@ -22,3 +22,26 @@ export const getPlanById = async (id: string): Promise<Plan> => {
   const response = await api.get<ApiResponse<Plan>>(`/plans/${id}`);
   return response.data.data;
 };
+
+export interface PlanInput {
+  name: string;
+  description?: string;
+  price: number;
+  durationDays: number;
+  credits: number;
+  serviceIds: string[];
+  isActive?: boolean;
+}
+
+export const createPlan = async (data: PlanInput): Promise<Plan> => {
+  const response = await api.post<ApiResponse<Plan>>("/plans", data);
+  return response.data.data;
+};
+
+export const updatePlan = async (
+  id: string,
+  data: Partial<PlanInput>
+): Promise<Plan> => {
+  const response = await api.patch<ApiResponse<Plan>>(`/plans/${id}`, data);
+  return response.data.data;
+};

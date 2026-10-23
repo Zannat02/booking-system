@@ -18,6 +18,7 @@ import ManageBookingsPage from "../pages/shared/ManageBookingsPage";
 import ManageSlotsPage from "../pages/shared/ManageSlotsPage";
 import ManageCategoriesPage from "../pages/shared/ManageCategoriesPage";
 import ManageServicesPage from "../pages/shared/ManageServicesPage";
+import ManagePlansPage from "../pages/admin/ManagePlansPage";
 
 export default function AppRoutes() {
     return (
@@ -39,6 +40,7 @@ export default function AppRoutes() {
                         <Route path="slots" element={<ManageSlotsPage />} />
                         <Route path="services" element={<ManageServicesPage />} />
                         <Route path="categories" element={<ManageCategoriesPage />} />
+                        <Route path="plans" element={<ManagePlansPage />} />
                     </Route>
                 </Route>
 
