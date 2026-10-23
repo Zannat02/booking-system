@@ -14,8 +14,15 @@ app.use(cors({ origin: env.clientUrls.length > 0 ? env.clientUrls : true }));
 app.use(morgan("dev"));
 app.use(express.json());
 
-app.use("/api", routes);
-
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Booking System API is running",
+    frontend: "https://service-booking-system-ashy.vercel.app/",
+    health: "/api/health",
+    documentation: "See the README for available API endpoints",
+  });
+});
 app.use(notFound);
 app.use(errorHandler);
 
