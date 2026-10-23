@@ -3,6 +3,7 @@ export * from "./common";
 export * from "./catalog";
 export * from "./subscription";
 export * from "./booking";
+export * from "./dashboard";
 
 export interface AuthUser {
   id: string;
